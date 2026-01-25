@@ -1,10 +1,16 @@
 from rest_framework import serializers
-from .models import Country, State, City, Category, Business
+from .models import SavedBusiness, Country, State, City, Category, Business
 
 class CountrySerializer(serializers.ModelSerializer):
     class Meta:
         model = Country
         fields = '__all__'
+
+class SavedBusinessSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SavedBusiness
+        fields = ["id", "business", "saved_at"]
+        read_only_fields = ["saved_at"]
 
 
 class StateSerializer(serializers.ModelSerializer):

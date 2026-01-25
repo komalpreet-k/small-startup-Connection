@@ -1,14 +1,15 @@
 from django.shortcuts import render
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 # Create your views here.
 from rest_framework import viewsets
-from .models import Country, State, City, Category, Business
+from .models import Country, State, City, Category, Business, SavedBusiness
 from .serializers import (
     CountrySerializer,
     StateSerializer,
     CitySerializer,
     CategorySerializer,
-    BusinessSerializer
+    BusinessSerializer,
+    SavedBusinessSerializer
 )
 
 class CountryViewSet(viewsets.ModelViewSet):
@@ -61,3 +62,14 @@ class BusinessViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(category__id=category_id)
 
         return queryset
+
+class SavedBusinessViewSet(viewsets.ModelViewSet):
+    queryset = SavedBusiness.objects.all()   # <-- ADD THIS
+    serializer_class = SavedBusinessSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return SavedBusiness.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
