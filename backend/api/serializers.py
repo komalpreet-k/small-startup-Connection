@@ -26,6 +26,11 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class BusinessSerializer(serializers.ModelSerializer):
+    category = CategorySerializer(read_only=True)
+    country = CountrySerializer(read_only=True)
+    state = StateSerializer(read_only=True)
+    city = CitySerializer(read_only=True)
+
     class Meta:
         model = Business
-        fields = '__all__'
+        fields = "__all__"
