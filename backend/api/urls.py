@@ -4,7 +4,8 @@ from .views import (
     StateViewSet,
     CityViewSet,
     CategoryViewSet,
-    BusinessViewSet
+    BusinessViewSet, 
+    SavedBusinessViewSet
 )
 
 router = DefaultRouter()
@@ -13,5 +14,6 @@ router.register(r'states', StateViewSet)
 router.register(r'cities', CityViewSet)
 router.register(r'categories', CategoryViewSet)
 router.register(r'businesses', BusinessViewSet)
+router.register(r'saved-businesses', SavedBusinessViewSet)
 
 urlpatterns = router.urls
