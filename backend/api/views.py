@@ -45,6 +45,8 @@ class BusinessViewSet(viewsets.ModelViewSet):
         country_id = self.request.query_params.get('country')
         state_id = self.request.query_params.get('state')
         city_id = self.request.query_params.get('city')
+        category_id = self.request.query_params.get('category')
+
 
         if country_id:
             queryset = queryset.filter(country__id=country_id)
@@ -54,5 +56,8 @@ class BusinessViewSet(viewsets.ModelViewSet):
 
         if city_id:
             queryset = queryset.filter(city__id=city_id)
+        
+        if category_id:
+            queryset = queryset.filter(category__id=category_id)
 
         return queryset
