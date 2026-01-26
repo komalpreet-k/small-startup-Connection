@@ -46,7 +46,7 @@ class BusinessViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
             return [AllowAny()]
-        return [IsAuthenticated()]
+        return [IsAuthenticated(), IsOwnerOrReadOnly()]
 
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
@@ -90,6 +90,10 @@ class BusinessViewSet(viewsets.ModelViewSet):
             owner=self.request.user,
             verification_status='pending'
         )
+    
+    def perform_update(self, serializer):
+        serializer.save(verification_status='pending')
+
 
 class SavedBusinessViewSet(viewsets.ModelViewSet):
     queryset = SavedBusiness.objects.all()   # <-- ADD THIS
