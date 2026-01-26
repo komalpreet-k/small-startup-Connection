@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from rest_framework import permissions
 from rest_framework.permissions import AllowAny, IsAuthenticated
 # Create your views here.
 from rest_framework import viewsets
@@ -9,6 +10,7 @@ from .serializers import (
     CitySerializer,
     CategorySerializer,
     BusinessSerializer,
+    BusinessCreateSerializer,
     SavedBusinessSerializer
 )
 
@@ -31,37 +33,67 @@ class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
+class IsOwnerOrReadOnly(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return obj.owner == request.user
+
 
 class BusinessViewSet(viewsets.ModelViewSet):
-    queryset = Business.objects.all()   # <-- ADD THIS
-    serializer_class = BusinessSerializer
-    permission_classes = [AllowAny]
+    queryset = Business.objects.all()
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [AllowAny()]
+        return [IsAuthenticated(), IsOwnerOrReadOnly()]
+
+    def get_serializer_class(self):
+        if self.action in ['create', 'update', 'partial_update']:
+            return BusinessCreateSerializer
+        return BusinessSerializer
 
     def get_queryset(self):
-        queryset = Business.objects.filter(
-            is_active=True,
-            verification_status='approved'
-        )
+        # Public view → only approved
+        if self.action in ['list', 'retrieve']:
+            queryset = Business.objects.filter(
+                is_active=True,
+                verification_status='approved'
+            )
+        else:
+            # Owner view → show their own businesses
+            queryset = Business.objects.filter(owner=self.request.user)
 
-        country_id = self.request.query_params.get('country')
-        state_id = self.request.query_params.get('state')
-        city_id = self.request.query_params.get('city')
-        category_id = self.request.query_params.get('category')
+        # Filters for public listing
+        if self.action == 'list':
+            country_id = self.request.query_params.get('country')
+            state_id = self.request.query_params.get('state')
+            city_id = self.request.query_params.get('city')
+            category_id = self.request.query_params.get('category')
 
+            if country_id:
+                queryset = queryset.filter(country__id=country_id)
 
-        if country_id:
-            queryset = queryset.filter(country__id=country_id)
+            if state_id:
+                queryset = queryset.filter(state__id=state_id)
 
-        if state_id:
-            queryset = queryset.filter(state__id=state_id)
+            if city_id:
+                queryset = queryset.filter(city__id=city_id)
 
-        if city_id:
-            queryset = queryset.filter(city__id=city_id)
-        
-        if category_id:
-            queryset = queryset.filter(category__id=category_id)
+            if category_id:
+                queryset = queryset.filter(category__id=category_id)
 
         return queryset
+
+    def perform_create(self, serializer):
+        serializer.save(
+            owner=self.request.user,
+            verification_status='pending'
+        )
+    
+    def perform_update(self, serializer):
+        serializer.save(verification_status='pending')
+
 
 class SavedBusinessViewSet(viewsets.ModelViewSet):
     queryset = SavedBusiness.objects.all()   # <-- ADD THIS

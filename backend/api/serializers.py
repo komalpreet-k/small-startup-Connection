@@ -40,3 +40,15 @@ class BusinessSerializer(serializers.ModelSerializer):
     class Meta:
         model = Business
         fields = "__all__"
+
+
+class BusinessCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Business
+        exclude = [
+            'owner',
+            'verification_status',
+            'created_at',
+            'updated_at'
+        ]
+
