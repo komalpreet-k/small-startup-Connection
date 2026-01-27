@@ -57,7 +57,7 @@ class BusinessViewSet(viewsets.ModelViewSet):
             return [AllowAny()]
         return [IsAuthenticated(), IsOwnerOrReadOnly()]
 
-        @action(detail=True, methods=['post'], permission_classes=[IsAdminUserCustom])
+    @action(detail=True, methods=['post'], permission_classes=[IsAdminUserCustom])
     def approve(self, request, pk=None):
         business = self.get_object()
 
@@ -84,6 +84,18 @@ class BusinessViewSet(viewsets.ModelViewSet):
 
         return Response(
             {"message": "Business rejected."},
+            status=status.HTTP_200_OK
+        )
+    
+    @action(detail=True, methods=['post'], permission_classes=[IsAdminUserCustom])
+    def deactivate(self, request, pk=None):
+        business = self.get_object()
+
+        business.is_active = False
+        business.save()
+
+        return Response(
+            {"message": "Business deactivated."},
             status=status.HTTP_200_OK
         )
 
