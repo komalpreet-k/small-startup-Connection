@@ -1,8 +1,13 @@
 from django.shortcuts import render
 from rest_framework import permissions
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated, BasePermission
 # Create your views here.
 from rest_framework import viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework import status
+
+
 from .models import Country, State, City, Category, Business, SavedBusiness
 from .serializers import (
     CountrySerializer,
@@ -40,6 +45,10 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
         return obj.owner == request.user
 
 
+class IsAdminUserCustom(BasePermission):
+    def has_permission(self, request, view):
+        return request.user and request.user.is_staff
+
 class BusinessViewSet(viewsets.ModelViewSet):
     queryset = Business.objects.all()
 
@@ -48,6 +57,37 @@ class BusinessViewSet(viewsets.ModelViewSet):
             return [AllowAny()]
         return [IsAuthenticated(), IsOwnerOrReadOnly()]
 
+        @action(detail=True, methods=['post'], permission_classes=[IsAdminUserCustom])
+    def approve(self, request, pk=None):
+        business = self.get_object()
+
+        if business.verification_status == 'approved':
+            return Response(
+                {"message": "Business is already approved."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        business.verification_status = 'approved'
+        business.save()
+
+        return Response(
+            {"message": "Business approved successfully."},
+            status=status.HTTP_200_OK
+        )
+    
+    @action(detail=True, methods=['post'], permission_classes=[IsAdminUserCustom])
+    def reject(self, request, pk=None):
+        business = self.get_object()
+
+        business.verification_status = 'rejected'
+        business.save()
+
+        return Response(
+            {"message": "Business rejected."},
+            status=status.HTTP_200_OK
+        )
+
+    
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
             return BusinessCreateSerializer
