@@ -27,6 +27,16 @@ class CountryViewSet(viewsets.ModelViewSet):
 class StateViewSet(viewsets.ModelViewSet):
     queryset = State.objects.all()
     serializer_class = StateSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        queryset = State.objects.all()
+        country_id = self.request.query_params.get("country")
+
+        if country_id:
+            queryset = queryset.filter(country__id=country_id)
+
+        return queryset.order_by("name")
 
 
 class CityViewSet(viewsets.ModelViewSet):
@@ -57,7 +67,7 @@ class BusinessViewSet(viewsets.ModelViewSet):
             return [AllowAny()]
         return [IsAuthenticated(), IsOwnerOrReadOnly()]
 
-        @action(detail=True, methods=['post'], permission_classes=[IsAdminUserCustom])
+    @action(detail=True, methods=['post'], permission_classes=[IsAdminUserCustom])
     def approve(self, request, pk=None):
         business = self.get_object()
 
@@ -84,6 +94,18 @@ class BusinessViewSet(viewsets.ModelViewSet):
 
         return Response(
             {"message": "Business rejected."},
+            status=status.HTTP_200_OK
+        )
+    
+    @action(detail=True, methods=['post'], permission_classes=[IsAdminUserCustom])
+    def deactivate(self, request, pk=None):
+        business = self.get_object()
+
+        business.is_active = False
+        business.save()
+
+        return Response(
+            {"message": "Business deactivated."},
             status=status.HTTP_200_OK
         )
 
@@ -123,7 +145,7 @@ class BusinessViewSet(viewsets.ModelViewSet):
             if category_id:
                 queryset = queryset.filter(category__id=category_id)
 
-        return queryset
+        return queryset.order_by("-id")
 
     def perform_create(self, serializer):
         serializer.save(
