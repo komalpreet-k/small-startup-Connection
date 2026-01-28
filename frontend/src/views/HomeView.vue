@@ -12,6 +12,15 @@ const selectedCategory = ref("");
 const selectedCountry = ref("");
 const selectedState = ref("");
 
+const resetFilters = async () => {
+  selectedCategory.value = "";
+  selectedCountry.value = "";
+  selectedState.value = "";
+  states.value = [];
+  await fetchBusinesses();
+};
+
+
 // Fetch businesses with all filters applied
 const fetchBusinesses = async () => {
   loading.value = true;
@@ -122,6 +131,7 @@ onMounted(async () => {
           {{ state.name }}
         </option>
       </select>
+      <button @click="resetFilters">Reset</button>
     </div>
 
     <div v-if="loading">
@@ -146,6 +156,19 @@ onMounted(async () => {
   margin-bottom: 20px;
   display: flex;
   gap: 15px;
+}
+
+button {
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: none;
+  background-color: #1e88e5;
+  color: white;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #1565c0;
 }
 
 select {
