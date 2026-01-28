@@ -36,7 +36,7 @@ class StateViewSet(viewsets.ModelViewSet):
         if country_id:
             queryset = queryset.filter(country__id=country_id)
 
-        return queryset
+        return queryset.order_by("name")
 
 
 class CityViewSet(viewsets.ModelViewSet):
@@ -145,7 +145,7 @@ class BusinessViewSet(viewsets.ModelViewSet):
             if category_id:
                 queryset = queryset.filter(category__id=category_id)
 
-        return queryset
+        return queryset.order_by("-id")
 
     def perform_create(self, serializer):
         serializer.save(

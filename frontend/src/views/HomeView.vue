@@ -2,11 +2,15 @@
 import { ref, onMounted } from "vue";
 import BusinessCard from "../components/BusinessCard.vue";
 
+const currentPage = ref(1);
+const nextPage = ref(null);
+const previousPage = ref(null);
 const businesses = ref([]);
 const categories = ref([]);
 const countries = ref([]);
 const states = ref([]);
 const loading = ref(false);
+const hasLoaded = ref(false);
 
 const selectedCategory = ref("");
 const selectedCountry = ref("");
@@ -25,7 +29,7 @@ const resetFilters = async () => {
 const fetchBusinesses = async () => {
   loading.value = true;
 
-  let url = "http://127.0.0.1:8000/api/businesses/";
+  let url = `http://127.0.0.1:8000/api/businesses/?page=${currentPage.value}`;
   const params = [];
 
   if (selectedCategory.value) {
@@ -41,25 +45,32 @@ const fetchBusinesses = async () => {
   }
 
   if (params.length > 0) {
-    url += "?" + params.join("&");
+    url += "&" + params.join("&");
   }
 
   const response = await fetch(url);
-  businesses.value = await response.json();
+  const data = await response.json();
+
+  businesses.value = data.results;
+  nextPage.value = data.next;
+  previousPage.value = data.previous;
 
   loading.value = false;
+  hasLoaded.value = true;
 };
 
 // Fetch categories
 const fetchCategories = async () => {
   const response = await fetch("http://127.0.0.1:8000/api/categories/");
-  categories.value = await response.json();
+  const data = await response.json();
+  categories.value = data.results ? data.results : data;
 };
 
 // Fetch countries
 const fetchCountries = async () => {
   const response = await fetch("http://127.0.0.1:8000/api/countries/");
-  countries.value = await response.json();
+  const data = await response.json();
+  countries.value = data.results ? data.results : data;
 };
 
 // Fetch states based on selected country
@@ -72,8 +83,13 @@ const fetchStates = async () => {
   const response = await fetch(
     `http://127.0.0.1:8000/api/states/?country=${selectedCountry.value}`
   );
-  states.value = await response.json();
+
+  const data = await response.json();
+
+  // If paginated
+  states.value = data.results ? data.results : data;
 };
+
 
 // When country changes
 const handleCountryChange = async () => {
@@ -90,6 +106,20 @@ const handleStateChange = async () => {
 // When category changes
 const handleCategoryChange = async () => {
   await fetchBusinesses();
+};
+
+const goToNext = async () => {
+  if (nextPage.value) {
+    currentPage.value++;
+    await fetchBusinesses();
+  }
+};
+
+const goToPrevious = async () => {
+  if (previousPage.value) {
+    currentPage.value--;
+    await fetchBusinesses();
+  }
 };
 
 onMounted(async () => {
@@ -135,12 +165,12 @@ onMounted(async () => {
     </div>
 
     <div v-if="loading">
-      Loading businesses...
-    </div>
+  Loading businesses...
+</div>
 
-  <div v-else-if="businesses.length === 0">
-    No businesses found.
-  </div>
+<div v-else-if="hasLoaded && businesses.length === 0">
+  No businesses found.
+</div>
 
 
     <BusinessCard
@@ -148,6 +178,24 @@ onMounted(async () => {
       :key="business.id"
       :business="business"
     />
+    <div class="pagination">
+  <button
+    @click="goToPrevious"
+    :disabled="!previousPage"
+  >
+    Previous
+  </button>
+
+  <span>Page {{ currentPage }}</span>
+
+  <button
+    @click="goToNext"
+    :disabled="!nextPage"
+  >
+    Next
+  </button>
+</div>
+
   </div>
 </template>
 
@@ -179,5 +227,26 @@ select {
 
 h1 {
   margin-bottom: 20px;
+}
+
+.pagination {
+  margin-top: 20px;
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.pagination button {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  background-color: #1e88e5;
+  color: white;
+  cursor: pointer;
+}
+
+.pagination button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
 }
 </style>
