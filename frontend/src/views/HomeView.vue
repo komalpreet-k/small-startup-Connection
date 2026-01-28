@@ -6,6 +6,7 @@ const businesses = ref([]);
 const categories = ref([]);
 const countries = ref([]);
 const states = ref([]);
+const loading = ref(false);
 
 const selectedCategory = ref("");
 const selectedCountry = ref("");
@@ -13,8 +14,9 @@ const selectedState = ref("");
 
 // Fetch businesses with all filters applied
 const fetchBusinesses = async () => {
-  let url = "http://127.0.0.1:8000/api/businesses/";
+  loading.value = true;
 
+  let url = "http://127.0.0.1:8000/api/businesses/";
   const params = [];
 
   if (selectedCategory.value) {
@@ -35,6 +37,8 @@ const fetchBusinesses = async () => {
 
   const response = await fetch(url);
   businesses.value = await response.json();
+
+  loading.value = false;
 };
 
 // Fetch categories
@@ -120,9 +124,14 @@ onMounted(async () => {
       </select>
     </div>
 
-    <div v-if="businesses.length === 0">
-      No businesses found.
+    <div v-if="loading">
+      Loading businesses...
     </div>
+
+  <div v-else-if="businesses.length === 0">
+    No businesses found.
+  </div>
+
 
     <BusinessCard
       v-for="business in businesses"
