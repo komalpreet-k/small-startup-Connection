@@ -27,6 +27,16 @@ class CountryViewSet(viewsets.ModelViewSet):
 class StateViewSet(viewsets.ModelViewSet):
     queryset = State.objects.all()
     serializer_class = StateSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        queryset = State.objects.all()
+        country_id = self.request.query_params.get("country")
+
+        if country_id:
+            queryset = queryset.filter(country__id=country_id)
+
+        return queryset
 
 
 class CityViewSet(viewsets.ModelViewSet):
