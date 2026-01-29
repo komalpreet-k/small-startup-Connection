@@ -1,10 +1,11 @@
-import { Button } from "@/components/ui/button"
+import { Routes, Route } from "react-router-dom"
+import Login from "@/pages/Login"
 
 function App() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <Button size="lg">UI System Ready</Button>
-    </div>
+    <Routes>
+      <Route path="/login" element={<Login />} />
+    </Routes>
   )
 }
 
